@@ -23,9 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.0.8
+        # v6 runs on Node 24 (Node 20 in v4 is deprecated by
+        # GitHub Actions in June 2026). No `version:` here on
+        # purpose — the canonical pin lives in package.json's
+        # `packageManager` field, and v6 will reject the workflow
+        # if both are set.
         with:
-          version: 11
           run_install: false
 
       - uses: actions/setup-node@v5
