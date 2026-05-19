@@ -1,0 +1,84 @@
+{
+  "name": "@astrolinkers/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the Astrolinkers API — natal charts, talent profiles, Vedic calculations, and engine-grounded LLM interpretations.",
+  "license": "MIT",
+  "author": "Astrolinkers",
+  "homepage": "https://astrolinkers.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fedorello/astrolinkers-sdk-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fedorello/astrolinkers-sdk-ts/issues"
+  },
+  "keywords": [
+    "astrology",
+    "vedic",
+    "jyotish",
+    "natal-chart",
+    "llm",
+    "api-client",
+    "sdk",
+    "typescript"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "ci": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test"
+  },
+  "dependencies": {
+    "eventsource-parser": "^3.0.8",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^4.1.6",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.0.0",
+    "prettier": "^3.8.3",
+    "tsdown": "^0.20.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.51.0",
+    "vitest": "^4.1.6"
+  },
+  "packageManager": "pnpm@11.1.1",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "msw"
+    ]
+  }
+}
