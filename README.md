@@ -13,7 +13,7 @@ profiles, Vedic calculations, and engine-grounded LLM interpretations.
   backoff on transient failures.
 - **Multilingual** — English plus 8 Indian languages + Spanish.
 
-> Status: alpha (`0.1.0`). Public API may shift between minor
+> Status: alpha (`0.1.2`). Public API may shift between minor
 > releases until `1.0`. Pin the minor version.
 
 ---
