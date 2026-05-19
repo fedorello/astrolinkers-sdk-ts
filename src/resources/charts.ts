@@ -2,14 +2,17 @@
 
 import type { Transport } from "../transport.js";
 import { ChartSchema, type Chart } from "../types/charts.js";
-import type { AstrologySystem, HouseSystem } from "../types/enums.js";
-
 export interface CreateChartParams {
   moment: Date;
   latitude: number;
   longitude: number;
-  system?: AstrologySystem;
-  houseSystem?: HouseSystem;
+  // Typed as plain `string` (rather than the `AstrologySystem` /
+  // `HouseSystem` const-as-enum unions) so callers can pass a
+  // future server-side value before the SDK adds the constant.
+  // The exported `AstrologySystem` / `HouseSystem` objects still
+  // give IDE autocomplete for the values the SDK knows about.
+  system?: string;
+  houseSystem?: string;
   ayanamsha?: string | null;
 }
 

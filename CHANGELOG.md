@@ -4,6 +4,29 @@ All notable changes to this SDK are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.1.2 — 2026-05-19
+
+### Fixed
+
+- **`charts.create()` `system` and `houseSystem` now typed as plain
+  `string`** (rather than the narrowed `AstrologySystem` /
+  `HouseSystem` const-as-enum unions), mirroring the existing
+  `ayanamsha` shape. The exported `AstrologySystem` /
+  `HouseSystem` objects still give IDE autocomplete for the values
+  the SDK knows about, but callers can now pass a future server-side
+  value before the SDK ships the constant — same forward-compat
+  story as `ayanamsha`.
+
+### Added
+
+- **`tests/e2e/smoke.test.ts`** — opt-in end-to-end suite
+  (89 tests, ~45 s) that exercises every public endpoint
+  (92 routes, all 12 resources, all 58 Vedic endpoints,
+  streaming + persistence). The default `pnpm test` script keeps
+  running only the unit suite; the e2e suite has its own
+  `pnpm test:e2e` script and `vitest.e2e.config.ts`, and skips
+  cleanly without `ASTROLINKERS_E2E_TOKEN`.
+
 ## 0.1.1 — 2026-05-19
 
 Schema-correctness release. Every non-Vedic typed response now matches
