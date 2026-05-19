@@ -21,9 +21,9 @@ profiles, Vedic calculations, and engine-grounded LLM interpretations.
 ## Install
 
 ```bash
-npm  install @astrolinkers/sdk
-pnpm add     @astrolinkers/sdk
-yarn add     @astrolinkers/sdk
+npm  install astrolinkers-sdk
+pnpm add     astrolinkers-sdk
+yarn add     astrolinkers-sdk
 ```
 
 Requires Node 18+ (uses global `fetch`).
@@ -49,7 +49,7 @@ Requires Node 18+ (uses global `fetch`).
 ## Quickstart
 
 ```ts
-import { Astrolinkers, InterpretationTier, Language } from "@astrolinkers/sdk";
+import { Astrolinkers, InterpretationTier, Language } from "astrolinkers-sdk";
 
 const client = new Astrolinkers({ apiKey: process.env.ASTROLINKERS_API_KEY! });
 
@@ -83,7 +83,7 @@ console.log(reading.costUsd, reading.cached);
 ## Streaming
 
 ```ts
-import { Astrolinkers } from "@astrolinkers/sdk";
+import { Astrolinkers } from "astrolinkers-sdk";
 
 const client = new Astrolinkers({ apiKey: "alk_live_…" });
 
@@ -126,7 +126,7 @@ console.log(row.content);
 ## Usage analytics
 
 ```ts
-import { UsageGroupBy } from "@astrolinkers/sdk";
+import { UsageGroupBy } from "astrolinkers-sdk";
 
 const today = new Date();
 const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -145,7 +145,7 @@ for (const bucket of summary.breakdown) {
 ## Vedic engine
 
 ```ts
-import { Varga, TheoArea, HouseSignificator } from "@astrolinkers/sdk";
+import { Varga, TheoArea, HouseSignificator } from "astrolinkers-sdk";
 
 // Divisional chart D9 (navamsa).
 const d9 = await client.vedic.divisional(chart.id, Varga.D9);
@@ -176,7 +176,7 @@ import {
   BudgetExceededError,
   NotFoundError,
   ServerError,
-} from "@astrolinkers/sdk";
+} from "astrolinkers-sdk";
 
 try {
   const reading = await client.llm.chartReading({ chartId: "bogus", tier: "premium" });
@@ -224,7 +224,7 @@ for await (const chunk of response.body!) {
 ## Versioning
 
 Semantic versioning. Until `1.0` minor releases may carry breaking
-changes; pin your minor (`"@astrolinkers/sdk": "~0.1"`) and bump
+changes; pin your minor (`"astrolinkers-sdk": "~0.1"`) and bump
 deliberately.
 
 ## License

@@ -1,0 +1,95 @@
+name: Release
+
+# Fires when a `vX.Y.Z` tag is pushed. The job builds the package
+# and publishes to npm via OIDC-based Trusted Publishing — no
+# `NPM_TOKEN` secret is stored in the repo. The published tarball
+# carries a SLSA build provenance attestation that links it back
+# to this exact tag + commit + workflow.
+#
+# Prerequisites (one-time, configured by the project owner on npm):
+#   1. The npm account has 2FA enabled.
+#   2. A "Trusted Publisher" is registered at
+#        https://www.npmjs.com/package/astrolinkers-sdk/access
+#      (or via the account-level "Pending publishers" page before
+#       the first release) with these exact values:
+#        - Package name      : astrolinkers-sdk
+#        - GitHub owner      : fedorello
+#        - Repository name   : astrolinkers-sdk-ts
+#        - Workflow filename : release.yml
+#        - Environment name  : npm
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build-and-publish:
+    name: Build + publish to npm
+    runs-on: ubuntu-latest
+    # The ``npm`` environment matches the Trusted Publisher record.
+    # Protect it in repo settings (e.g. required reviewers) if you
+    # want a human in the loop on every release.
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/astrolinkers-sdk
+    permissions:
+      # `id-token: write` is the OIDC token npm exchanges for upload
+      # creds AND the same token that signs the provenance
+      # attestation. `contents: read` is the minimum needed to
+      # check the tag out.
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        # `--ignore-scripts` keeps pnpm v11's build-script policy
+        # from blocking on optional postinstall scripts (e.g. msw's
+        # browser worker, which we do not use).
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Verify the tag matches package.json version
+        # Refuse to publish if the tag does not equal the version
+        # declared in package.json — keeps mis-tagged releases
+        # from accidentally polluting npm.
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME ($TAG) does not match package.json version ($PKG_VERSION)."
+            exit 1
+          fi
+
+      - name: Run quality gates
+        # Same gates as CI — never publish a build that does not
+        # pass lint + format + typecheck + tests.
+        run: pnpm run ci
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Publish to npm (Trusted Publishing + provenance)
+        # `--provenance` attaches a SLSA attestation signed via the
+        # workflow's OIDC token; `--access public` is required for
+        # an unscoped package's first publish (and a harmless no-op
+        # on subsequent ones). `--no-git-checks` is needed because
+        # we publish from a detached HEAD at the tag.
+        run: pnpm publish --provenance --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}

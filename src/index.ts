@@ -4,7 +4,7 @@
  * Quick start:
  *
  * ```ts
- * import { Astrolinkers, InterpretationTier, Language } from "@astrolinkers/sdk";
+ * import { Astrolinkers, InterpretationTier, Language } from "astrolinkers-sdk";
  *
  * const client = new Astrolinkers({ apiKey: "alk_live_…" });
  * const chart = await client.charts.create({
