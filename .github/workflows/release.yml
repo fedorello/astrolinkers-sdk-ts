@@ -63,20 +63,17 @@ jobs:
         with:
           run_install: false
 
-      - name: Install Node 22
+      - name: Install Node 24
         uses: actions/setup-node@v5
         with:
-          # 22.14+ is required for npm Trusted Publishing — earlier
-          # 22.x ships an npm CLI older than 11.5.1.
-          node-version: "22"
+          # Node 24 ships npm >= 11.6, which already supports
+          # Trusted Publishing. (Node 22.x ships an older npm and
+          # self-upgrading mid-job hits the known `Cannot find
+          # module 'promise-retry'` failure mode, so we just use
+          # a newer Node instead.)
+          node-version: "24"
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
-
-      - name: Upgrade npm to >= 11.5.1
-        # Trusted Publishing only works with npm 11.5.1+. The
-        # version bundled with Node 22 LTS lags behind, so pin to
-        # a known-good release explicitly.
-        run: npm install --global npm@latest
 
       - name: Install dependencies
         # `--ignore-scripts` keeps pnpm v11's build-script policy
