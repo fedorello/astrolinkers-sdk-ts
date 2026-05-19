@@ -39,32 +39,48 @@ describe("client.apiKeys", () => {
     fake.on("POST", "/v1/api-keys", () =>
       jsonResponse(
         {
-          api_key: {
-            id: "k1",
-            name: "n",
-            scopes: ["charts:read"],
-            created_at: "2026-05-18T22:00:00Z",
-          },
-          token: "alk_secret_…",
+          id: "k1",
+          name: "n",
+          key_prefix: "alk_live",
+          key_last4: "abcd",
+          display: "alk_live…abcd",
+          scopes: ["charts:read"],
+          owner_tenant_id: "tenant-1",
+          created_at: "2026-05-18T22:00:00Z",
+          created_by: "user-1",
+          last_used_at: null,
+          expires_at: null,
+          revoked_at: null,
+          metadata: {},
+          plaintext: "alk_secret_…",
         },
         { status: 201 },
       ),
     );
     const client = newClient(fake);
     const issued = await client.apiKeys.issue({ name: "n", scopes: ["charts:read"] });
-    expect(issued.token).toBe("alk_secret_…");
-    expect(issued.api_key.id).toBe("k1");
+    expect(issued.plaintext).toBe("alk_secret_…");
+    expect(issued.id).toBe("k1");
   });
 
   it("list returns parsed items", async () => {
     fake.on("GET", "/v1/api-keys", () =>
       jsonResponse({
-        items: [
+        keys: [
           {
             id: "k1",
             name: "n",
+            key_prefix: "alk_live",
+            key_last4: "abcd",
+            display: "alk_live…abcd",
             scopes: ["charts:read"],
+            owner_tenant_id: "tenant-1",
             created_at: "2026-05-18T22:00:00Z",
+            created_by: "user-1",
+            last_used_at: null,
+            expires_at: null,
+            revoked_at: null,
+            metadata: {},
           },
         ],
       }),
@@ -136,8 +152,19 @@ describe("client.interpretations.create", () => {
           chart_id: "c1",
           locale: "en",
           tone: "corporate",
-          statements: [{ id: "s1", template_id: "t1", skill_id: "k1", text: "x" }],
-          created_at: "2026-05-18T22:00:00Z",
+          statements: [
+            {
+              id: "s1",
+              template_id: "t1",
+              skill_id: "k1",
+              kind: "strength",
+              locale: "en",
+              body: "x",
+              score: 0.91,
+              rule_path: ["rule.root", "rule.leaf"],
+              created_at: "2026-05-18T22:00:00Z",
+            },
+          ],
         },
         { status: 201 },
       ),
@@ -145,6 +172,8 @@ describe("client.interpretations.create", () => {
     const client = newClient(fake);
     const interp = await client.interpretations.create({ chartId: "c1" });
     expect(interp.statements[0]!.id).toBe("s1");
+    expect(interp.statements[0]!.body).toBe("x");
+    expect(interp.statements[0]!.score).toBe(0.91);
   });
 });
 
@@ -154,15 +183,34 @@ describe("client.plans", () => {
   it("list", async () => {
     fake.on("GET", "/v1/plans", () =>
       jsonResponse({
-        items: [
-          { tier: "free", name: "Free" },
-          { tier: "pro", name: "Pro", monthly_price_usd: 49 },
+        plans: [
+          {
+            tier: "free",
+            display_name: "Free",
+            monthly_price_usd: 0,
+            rate_limit_capacity: 100,
+            rate_limit_refill_per_second: 1,
+            llm_cost_cap_per_hour_usd: null,
+            status: "active",
+            features: [],
+          },
+          {
+            tier: "pro",
+            display_name: "Pro",
+            monthly_price_usd: 49,
+            rate_limit_capacity: 1000,
+            rate_limit_refill_per_second: 10,
+            llm_cost_cap_per_hour_usd: 5,
+            status: "active",
+            features: ["llm"],
+          },
         ],
       }),
     );
     const client = newClient(fake);
     const plans = await client.plans.list();
     expect(plans.map((p) => p.tier)).toEqual(["free", "pro"]);
+    expect(plans[1]!.display_name).toBe("Pro");
   });
 });
 
@@ -171,11 +219,23 @@ describe("client.plans", () => {
 describe("client.profiles", () => {
   it("talent", async () => {
     fake.on("GET", "/v1/charts/c1/profile/talent", () =>
-      jsonResponse({ chart_id: "c1", locale: "en", skills: [{ id: "s1" }] }),
+      jsonResponse({
+        chart_id: "c1",
+        scores: [
+          {
+            skill_id: "s1",
+            value: 0.7,
+            level: "high",
+            contributing_rules: ["rule.alpha"],
+          },
+        ],
+      }),
     );
     const client = newClient(fake);
     const prof = await client.profiles.talent("c1");
     expect(prof.chart_id).toBe("c1");
+    expect(prof.scores[0]!.skill_id).toBe("s1");
+    expect(prof.scores[0]!.level).toBe("high");
   });
 });
 
@@ -191,10 +251,10 @@ describe("client.reports", () => {
             chart_id: "c1",
             kind: "talent_lens",
             format: "pdf",
-            locale: "en",
-            tone: "corporate",
             status: "pending",
+            artifact_key: null,
             created_at: "2026-05-18T22:00:00Z",
+            updated_at: "2026-05-18T22:00:00Z",
           },
           { status: 202 },
         ),
@@ -205,11 +265,11 @@ describe("client.reports", () => {
           chart_id: "c1",
           kind: "talent_lens",
           format: "pdf",
-          locale: "en",
-          tone: "corporate",
           status: "ready",
           artifact_url: "https://signed.example/r1.pdf",
+          artifact_key: "reports/r1.pdf",
           created_at: "2026-05-18T22:00:00Z",
+          updated_at: "2026-05-18T22:05:00Z",
         }),
       );
     const client = newClient(fake);
@@ -217,6 +277,7 @@ describe("client.reports", () => {
     expect(job.status).toBe("pending");
     const polled = await client.reports.retrieve("r1");
     expect(polled.status).toBe("ready");
+    expect(polled.artifact_key).toBe("reports/r1.pdf");
   });
 });
 
@@ -225,14 +286,27 @@ describe("client.reports", () => {
 describe("client.usage", () => {
   it("per-key + per-tenant", async () => {
     const payload = {
-      buckets: [{ hour: "2026-05-18T22:00:00Z", request_count: 5 }],
+      since: "2026-05-18T00:00:00Z",
+      until: "2026-05-19T00:00:00Z",
       total_requests: 5,
+      total_errors: 0,
+      buckets: [
+        {
+          bucket_hour: "2026-05-18T22:00:00Z",
+          requests: 5,
+          errors_4xx: 0,
+          errors_5xx: 0,
+          latency_p95_ms: 123.4,
+        },
+      ],
     };
     fake
       .on("GET", "/v1/api-keys/k1/usage", () => jsonResponse(payload))
       .on("GET", "/v1/tenant/usage", () => jsonResponse(payload));
     const client = newClient(fake);
-    expect((await client.usage.apiKey("k1")).total_requests).toBe(5);
+    const keyUsage = await client.usage.apiKey("k1");
+    expect(keyUsage.total_requests).toBe(5);
+    expect(keyUsage.buckets[0]!.requests).toBe(5);
     expect((await client.usage.tenant()).total_requests).toBe(5);
   });
 });

@@ -9,19 +9,22 @@ import { z } from "zod";
 
 export const HourlyUsageBucketSchema = z
   .object({
-    hour: z.coerce.date(),
-    request_count: z.number().int(),
-    success_count: z.number().int().default(0),
-    error_count: z.number().int().default(0),
-    last_request_at: z.coerce.date().nullable().optional(),
+    bucket_hour: z.coerce.date(),
+    requests: z.number().int(),
+    errors_4xx: z.number().int(),
+    errors_5xx: z.number().int(),
+    latency_p95_ms: z.number().nullable(),
   })
   .loose();
 export type HourlyUsageBucket = z.infer<typeof HourlyUsageBucketSchema>;
 
 export const HourlyUsageSchema = z
   .object({
-    buckets: z.array(HourlyUsageBucketSchema).default([]),
-    total_requests: z.number().int().default(0),
+    since: z.coerce.date(),
+    until: z.coerce.date(),
+    total_requests: z.number().int(),
+    total_errors: z.number().int(),
+    buckets: z.array(HourlyUsageBucketSchema),
   })
   .loose();
 export type HourlyUsage = z.infer<typeof HourlyUsageSchema>;

@@ -2,14 +2,20 @@
 
 import { z } from "zod";
 
+export const SkillScoreSchema = z
+  .object({
+    skill_id: z.string(),
+    value: z.number(),
+    level: z.string(),
+    contributing_rules: z.array(z.string()),
+  })
+  .loose();
+export type SkillScore = z.infer<typeof SkillScoreSchema>;
+
 export const SkillProfileSchema = z
   .object({
     chart_id: z.string(),
-    locale: z.string().nullable().optional(),
-    skills: z.array(z.record(z.string(), z.unknown())).default([]),
-    strengths: z.array(z.record(z.string(), z.unknown())).default([]),
-    risks: z.array(z.record(z.string(), z.unknown())).default([]),
-    metadata: z.record(z.string(), z.unknown()).default({}),
+    scores: z.array(SkillScoreSchema),
   })
   .loose();
 export type SkillProfile = z.infer<typeof SkillProfileSchema>;

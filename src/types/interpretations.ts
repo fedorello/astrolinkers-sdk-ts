@@ -13,7 +13,7 @@ const ZType = z.enum(["theme", "chart_reading", "dasha_forecast", "muhurta"]);
 
 export const LLMInterpretationSchema = z
   .object({
-    interpretation_type: ZType,
+    interpretation_type: z.union([ZType, z.string()]),
     language: ZLanguage,
     tier: ZTier,
     content: z.string(),

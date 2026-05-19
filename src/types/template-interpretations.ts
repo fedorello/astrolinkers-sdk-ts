@@ -7,8 +7,12 @@ export const StatementSchema = z
     id: z.string(),
     template_id: z.string(),
     skill_id: z.string(),
-    text: z.string(),
-    confidence: z.number().nullable().optional(),
+    kind: z.string(),
+    locale: z.string(),
+    body: z.string(),
+    score: z.number(),
+    rule_path: z.array(z.string()),
+    created_at: z.coerce.date(),
   })
   .loose();
 export type Statement = z.infer<typeof StatementSchema>;
@@ -20,8 +24,6 @@ export const TemplateInterpretationSchema = z
     locale: z.string(),
     tone: z.string(),
     statements: z.array(StatementSchema).default([]),
-    metadata: z.record(z.string(), z.unknown()).default({}),
-    created_at: z.coerce.date(),
   })
   .loose();
 export type TemplateInterpretation = z.infer<typeof TemplateInterpretationSchema>;

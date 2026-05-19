@@ -8,8 +8,6 @@ export interface CreateChartParams {
   moment: Date;
   latitude: number;
   longitude: number;
-  timezone?: string;
-  locationName?: string;
   system?: AstrologySystem;
   houseSystem?: HouseSystem;
   ayanamsha?: string | null;
@@ -21,13 +19,11 @@ function buildBody(params: CreateChartParams): Record<string, unknown> {
     latitude: params.latitude,
     longitude: params.longitude,
   };
-  if (params.timezone !== undefined) birth.timezone = params.timezone;
-  if (params.locationName !== undefined) birth.location_name = params.locationName;
 
   const body: Record<string, unknown> = {
     birth,
     system: params.system ?? "vedic",
-    house_system: params.houseSystem ?? "whole_sign",
+    house_system: params.houseSystem ?? "placidus",
   };
   const ayanamsha = params.ayanamsha === undefined ? "lahiri" : params.ayanamsha;
   if (ayanamsha !== null) body.ayanamsha = ayanamsha;

@@ -3,7 +3,7 @@
  *
  * The plaintext token is returned exactly once at issue time —
  * subsequent `list` calls only return metadata. Treat
- * {@link IssuedApiKey.token} as the only chance to capture it.
+ * {@link IssuedApiKey.plaintext} as the only chance to capture it.
  */
 
 import { z } from "zod";
@@ -12,11 +12,16 @@ export const ApiKeySchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    key_prefix: z.string(),
+    key_last4: z.string(),
+    display: z.string(),
     scopes: z.array(z.string()),
+    owner_tenant_id: z.string(),
     created_at: z.coerce.date(),
-    expires_at: z.coerce.date().nullable().optional(),
-    revoked_at: z.coerce.date().nullable().optional(),
-    last_used_at: z.coerce.date().nullable().optional(),
+    created_by: z.string(),
+    last_used_at: z.coerce.date().nullable(),
+    expires_at: z.coerce.date().nullable(),
+    revoked_at: z.coerce.date().nullable(),
     metadata: z.record(z.string(), z.string()).default({}),
   })
   .loose();
@@ -24,8 +29,20 @@ export type ApiKey = z.infer<typeof ApiKeySchema>;
 
 export const IssuedApiKeySchema = z
   .object({
-    api_key: ApiKeySchema,
-    token: z.string(),
+    id: z.string(),
+    name: z.string(),
+    key_prefix: z.string(),
+    key_last4: z.string(),
+    display: z.string(),
+    scopes: z.array(z.string()),
+    owner_tenant_id: z.string(),
+    created_at: z.coerce.date(),
+    created_by: z.string(),
+    last_used_at: z.coerce.date().nullable(),
+    expires_at: z.coerce.date().nullable(),
+    revoked_at: z.coerce.date().nullable(),
+    metadata: z.record(z.string(), z.string()).default({}),
+    plaintext: z.string(),
   })
   .loose();
 export type IssuedApiKey = z.infer<typeof IssuedApiKeySchema>;

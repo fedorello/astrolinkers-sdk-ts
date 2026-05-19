@@ -8,7 +8,7 @@ export class Plans {
 
   async list(): Promise<Plan[]> {
     const data = await this.transport.request("GET", "/v1/plans");
-    const items = data && typeof data === "object" && "items" in data ? data.items : data;
+    const items = data && typeof data === "object" && "plans" in data ? data.plans : undefined;
     return PlanSchema.array().parse(items);
   }
 

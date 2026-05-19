@@ -33,7 +33,7 @@ export class ApiKeys {
     const data = await this.transport.request("GET", "/v1/api-keys", {
       params: { include_revoked: options.includeRevoked ?? false },
     });
-    const items = data && typeof data === "object" && "items" in data ? data.items : data;
+    const items = data && typeof data === "object" && "keys" in data ? data.keys : undefined;
     return ApiKeySchema.array().parse(items);
   }
 

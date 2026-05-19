@@ -28,14 +28,12 @@ export const ReportSchema = z
     chart_id: z.string(),
     kind: z.enum(["talent_lens", "personal_reader"]),
     format: z.enum(["html", "pdf"]),
-    locale: z.string(),
-    tone: z.string(),
     status: z.enum(["pending", "running", "ready", "failed"]),
     artifact_url: z.string().nullable().optional(),
+    artifact_key: z.string().nullable(),
     error: z.string().nullable().optional(),
     created_at: z.coerce.date(),
-    updated_at: z.coerce.date().nullable().optional(),
-    metadata: z.record(z.string(), z.unknown()).default({}),
+    updated_at: z.coerce.date(),
   })
   .loose();
 export type Report = z.infer<typeof ReportSchema>;

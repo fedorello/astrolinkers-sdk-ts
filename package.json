@@ -1,6 +1,6 @@
 {
   "name": "@astrolinkers/sdk-ts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official TypeScript SDK for the Astrolinkers API — natal charts, talent profiles, Vedic calculations, and engine-grounded LLM interpretations.",
   "license": "MIT",
   "author": "Astrolinkers",

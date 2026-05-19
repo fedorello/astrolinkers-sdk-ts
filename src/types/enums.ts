@@ -46,11 +46,9 @@ export const AstrologySystem = {
 } as const;
 export type AstrologySystem = (typeof AstrologySystem)[keyof typeof AstrologySystem];
 
-/** Sidereal offset used by the Vedic engine (most common values). */
+/** Sidereal offset used by the Vedic engine. Server currently accepts `lahiri` only. */
 export const AyanamshaType = {
   LAHIRI: "lahiri",
-  RAMAN: "raman",
-  KRISHNAMURTI: "krishnamurti",
 } as const;
 export type AyanamshaType = (typeof AyanamshaType)[keyof typeof AyanamshaType];
 
@@ -59,7 +57,6 @@ export const HouseSystem = {
   PLACIDUS: "placidus",
   WHOLE_SIGN: "whole_sign",
   EQUAL: "equal",
-  KOCH: "koch",
 } as const;
 export type HouseSystem = (typeof HouseSystem)[keyof typeof HouseSystem];
 

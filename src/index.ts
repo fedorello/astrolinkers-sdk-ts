@@ -149,7 +149,12 @@ export type { IssueApiKeyParams } from "./resources/api-keys.js";
 export { type Plan, PlanSchema, type TenantPlan, TenantPlanSchema } from "./types/plans.js";
 
 // ── Profiles ───────────────────────────────────────────────────
-export { type SkillProfile, SkillProfileSchema } from "./types/profiles.js";
+export {
+  type SkillProfile,
+  SkillProfileSchema,
+  type SkillScore,
+  SkillScoreSchema,
+} from "./types/profiles.js";
 
 // ── Reports ────────────────────────────────────────────────────
 export {
