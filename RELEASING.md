@@ -1,50 +1,51 @@
-# Releasing `astrolinkers-sdk`
+## Releasing `astrolinkers-sdk`
 
-This SDK is published to npm via **Trusted Publishing** — the
-GitHub Actions workflow at `.github/workflows/release.yml`
-exchanges an OIDC token for a one-shot upload credential. The
-upload also carries a SLSA build provenance attestation that
-links the tarball back to this exact tag + commit + workflow.
+Steady-state releases publish to npm via **Trusted Publishing**:
+the GitHub Actions workflow at `.github/workflows/release.yml`
+exchanges an OIDC token for a one-shot upload credential, and the
+tarball ships with a SLSA build provenance attestation that links
+it back to this exact tag + commit + workflow. No long-lived
+`NPM_TOKEN` lives in the repo or CI secrets.
 
-No long-lived `NPM_TOKEN` lives in the repo or CI secrets.
+> **One-time exception:** npm does not support pre-registering
+> Trusted Publishers for packages that do not yet exist (unlike
+> PyPI's pending publishers). The very first publish of
+> `astrolinkers-sdk` therefore has to be bootstrapped with a
+> short-lived npm Automation Token.
 
-## One-time setup
-
-These steps are done **once** by the project owner before the
-first release. After that, releases are tag-only.
+## Bootstrap (only for the first publish)
 
 1. Enable 2FA on the npm account (`Account → Security`).
+2. Create a single-use **Automation Token** at
+   https://www.npmjs.com/settings/&lt;your-user&gt;/tokens —
+   "Automation" so it bypasses 2FA in CI.
+3. Add it to the GitHub repo's secrets:
+   https://github.com/fedorello/astrolinkers-sdk-ts/settings/secrets/actions
+   → "New repository secret" → name `NPM_TOKEN`.
+4. Create a `npm` environment in the GitHub repo (Settings →
+   Environments → New environment). The workflow targets this
+   environment; it does not need any protection rules during
+   bootstrap.
+5. Cut the first release (see "Cutting a release" below). The
+   workflow uploads via the token because no Trusted Publisher is
+   configured yet.
+6. **Immediately after** the first publish succeeds:
+   1. Open
+      https://www.npmjs.com/package/astrolinkers-sdk/access →
+      "Settings" → "Trusted publishing" → "Add trusted publisher".
+   2. Pick **GitHub Actions** and enter the values in the table
+      below.
+   3. Delete the `NPM_TOKEN` secret from the GitHub repo.
 
-2. **For the very first publish** of `astrolinkers-sdk`, npm
-   requires the package to exist before you can register a
-   per-package Trusted Publisher. Two ways to get past this
-   chicken-and-egg:
-   - **Option A — pending publisher (recommended).** On
-     https://www.npmjs.com/settings/&lt;your-user&gt;/trusted-publishers
-     register a "pending" publisher for the not-yet-published
-     package using the values in step 3.
-   - **Option B — bootstrap with a token.** Create a single-use
-     Automation token at
-     https://www.npmjs.com/settings/&lt;your-user&gt;/tokens,
-     store it as repo secret `NODE_AUTH_TOKEN`, run the first
-     release, then immediately delete the token and register the
-     Trusted Publisher on the package's `Access` tab.
+| Field             | Value                 |
+| ----------------- | --------------------- |
+| Package name      | `astrolinkers-sdk`    |
+| GitHub owner      | `fedorello`           |
+| Repository name   | `astrolinkers-sdk-ts` |
+| Workflow filename | `release.yml`         |
+| Environment name  | `npm`                 |
 
-3. Register the Trusted Publisher (the workflow already targets
-   these exact values):
-
-   | Field             | Value                 |
-   | ----------------- | --------------------- |
-   | Package name      | `astrolinkers-sdk`    |
-   | GitHub owner      | `fedorello`           |
-   | Repository name   | `astrolinkers-sdk-ts` |
-   | Workflow filename | `release.yml`         |
-   | Environment name  | `npm`                 |
-
-4. Create a `npm` environment in the GitHub repo
-   (Settings → Environments → New environment). Optional:
-   enable "Required reviewers" so a release upload needs a human
-   approval.
+From release 2 onwards the workflow uses OIDC transparently.
 
 ## Cutting a release
 
@@ -59,9 +60,8 @@ first release. After that, releases are tag-only.
    pnpm run build
    ```
 
-   `pnpm run build` emits `dist/` with the dual ESM + CJS
-   entry points and `.d.mts` / `.d.cts` types. Inspect with
-   `npm pack --dry-run` to see exactly what will land on npm.
+   Inspect the tarball with `npm pack --dry-run` if you want to
+   see exactly what will land on npm.
 
 4. **Commit + push** the version bump:
 
@@ -89,8 +89,8 @@ first release. After that, releases are tag-only.
 
    The new version should appear within ~1 minute of the
    workflow completing. `npm install astrolinkers-sdk@0.X.Y`
-   should work immediately afterwards. The provenance badge
-   should appear on the package page.
+   should work immediately afterwards. From release 2 onwards
+   the npm package page shows a "Provenance" badge.
 
 ## What happens on a tag push
 
@@ -102,34 +102,43 @@ GitHub Actions: release.yml
         │
         ├── Check out the tag
         ├── Install pnpm 11 + Node 22
+        ├── Upgrade npm to >= 11.5.1   (required for OIDC)
         ├── pnpm install --frozen-lockfile
         ├── Verify tag == package.json version
         ├── pnpm run ci   (lint + format + typecheck + tests)
         ├── pnpm run build
         ├── Request OIDC token (id-token: write)
-        └── pnpm publish --provenance --access public
+        └── npm publish --provenance --access public
                 │
                 ▼
             npm exchanges OIDC token for upload creds
+            (falls back to NODE_AUTH_TOKEN on bootstrap run)
                 │
                 ▼
             Tarball uploaded with SLSA provenance attestation
 ```
 
+`npm publish` is used instead of `pnpm publish` because pnpm
+does not yet implement the OIDC token exchange (pnpm/pnpm#9812).
+Dependency install + build still go through pnpm.
+
 ## If something goes wrong
 
 - **Tag-version mismatch** → the workflow exits early before
   publishing. Push a new tag matching `package.json`.
-- **npm rejects the upload** → the most common cause is that the
-  Trusted Publisher record does not match the workflow. Check
-  https://www.npmjs.com/package/astrolinkers-sdk/access and
-  confirm the GitHub owner / repo / workflow filename /
-  environment name are exact matches.
+- **`E403 OIDC token exchange failed`** → the Trusted Publisher
+  record on https://www.npmjs.com/package/astrolinkers-sdk/access
+  does not match the workflow. Confirm GitHub owner / repo /
+  workflow filename / environment name are exact matches.
+- **`E401 Need auth`** on the very first publish → the
+  `NPM_TOKEN` secret is missing or expired. Re-create the token
+  and re-add it. (Do not re-create the tag — push `v0.X.(Y+1)`
+  with the same version bumped.)
 - **A version was published with a bug** → npm does not allow
   re-using a version number. Deprecate the bad version
   (`npm deprecate astrolinkers-sdk@0.X.Y "use 0.X.(Y+1)"`) and
-  ship `0.X.(Y+1)`. Unpublish is only allowed within 72 hours and
-  only if no other public package depends on the version.
+  ship `0.X.(Y+1)`. Unpublish is only allowed within 72 hours
+  and only if no other public package depends on the version.
 
 ## Why Trusted Publishing instead of a token
 

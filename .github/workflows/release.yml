@@ -1,22 +1,30 @@
 name: Release
 
 # Fires when a `vX.Y.Z` tag is pushed. The job builds the package
-# and publishes to npm via OIDC-based Trusted Publishing — no
-# `NPM_TOKEN` secret is stored in the repo. The published tarball
-# carries a SLSA build provenance attestation that links it back
-# to this exact tag + commit + workflow.
+# and publishes to npm. Two auth paths are supported:
 #
-# Prerequisites (one-time, configured by the project owner on npm):
-#   1. The npm account has 2FA enabled.
-#   2. A "Trusted Publisher" is registered at
-#        https://www.npmjs.com/package/astrolinkers-sdk/access
-#      (or via the account-level "Pending publishers" page before
-#       the first release) with these exact values:
-#        - Package name      : astrolinkers-sdk
-#        - GitHub owner      : fedorello
-#        - Repository name   : astrolinkers-sdk-ts
-#        - Workflow filename : release.yml
-#        - Environment name  : npm
+# 1. Bootstrap (first release only): an `NPM_TOKEN` repo secret is
+#    used to publish the very first version. npm requires the
+#    package to exist before a Trusted Publisher can be registered
+#    — there is no pre-registration like PyPI's pending publishers.
+# 2. Trusted Publishing (every release after that): once the
+#    Trusted Publisher record is configured on
+#    https://www.npmjs.com/package/astrolinkers-sdk/access, the
+#    `NPM_TOKEN` secret is deleted from the repo and the npm CLI
+#    transparently switches to OIDC. The published tarball carries
+#    a SLSA build provenance attestation that links it back to
+#    this exact tag + commit + workflow.
+#
+# Trusted Publisher values (configured AFTER first publish):
+#   - Package name      : astrolinkers-sdk
+#   - GitHub owner      : fedorello
+#   - Repository name   : astrolinkers-sdk-ts
+#   - Workflow filename : release.yml
+#   - Environment name  : npm
+#
+# pnpm is used for `install` + `build` + tests, but `npm publish`
+# does the actual upload because pnpm publish does not yet support
+# the OIDC token exchange (pnpm/pnpm#9812).
 
 on:
   push:
@@ -58,9 +66,17 @@ jobs:
       - name: Install Node 22
         uses: actions/setup-node@v5
         with:
+          # 22.14+ is required for npm Trusted Publishing — earlier
+          # 22.x ships an npm CLI older than 11.5.1.
           node-version: "22"
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm to >= 11.5.1
+        # Trusted Publishing only works with npm 11.5.1+. The
+        # version bundled with Node 22 LTS lags behind, so pin to
+        # a known-good release explicitly.
+        run: npm install --global npm@latest
 
       - name: Install dependencies
         # `--ignore-scripts` keeps pnpm v11's build-script policy
@@ -88,14 +104,21 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Publish to npm (Trusted Publishing + provenance)
-        # No `NODE_AUTH_TOKEN` — the npm CLI detects the GitHub
-        # Actions OIDC context (because of `id-token: write` above)
-        # and exchanges the OIDC token for a one-shot upload
-        # credential against the Trusted Publisher record.
-        # `--provenance` attaches a SLSA attestation signed via the
-        # same OIDC token; `--access public` is required for an
-        # unscoped package's first publish (and a harmless no-op on
-        # subsequent ones). `--no-git-checks` is needed because we
-        # publish from a detached HEAD at the tag.
-        run: pnpm publish --provenance --access public --no-git-checks
+      - name: Publish to npm
+        # `npm publish` (not pnpm) — pnpm publish does not yet
+        # implement the OIDC token exchange (pnpm/pnpm#9812). npm
+        # itself transparently picks the right auth path:
+        #
+        #   - If a Trusted Publisher is configured for this package
+        #     and `id-token: write` is granted, npm uses OIDC and
+        #     ignores NODE_AUTH_TOKEN.
+        #   - Otherwise it falls back to NODE_AUTH_TOKEN.
+        #
+        # `--provenance` and `--access public` are explicit on
+        # purpose: docs claim provenance is implicit under Trusted
+        # Publishing but the bootstrap (token-based) publish needs
+        # the flag, and `--access public` is required for an
+        # unscoped package's first publish.
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
