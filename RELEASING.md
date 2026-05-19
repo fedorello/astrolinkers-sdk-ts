@@ -1,4 +1,4 @@
-## Releasing `astrolinkers-sdk`
+## Releasing `@astrolinkers/sdk-ts`
 
 Steady-state releases publish to npm via **Trusted Publishing**:
 the GitHub Actions workflow at `.github/workflows/release.yml`
@@ -10,7 +10,7 @@ it back to this exact tag + commit + workflow. No long-lived
 > **One-time exception:** npm does not support pre-registering
 > Trusted Publishers for packages that do not yet exist (unlike
 > PyPI's pending publishers). The very first publish of
-> `astrolinkers-sdk` therefore has to be bootstrapped with a
+> `@astrolinkers/sdk-ts` therefore has to be bootstrapped with a
 > short-lived npm Automation Token.
 
 ## Bootstrap (only for the first publish)
@@ -31,19 +31,19 @@ it back to this exact tag + commit + workflow. No long-lived
    configured yet.
 6. **Immediately after** the first publish succeeds:
    1. Open
-      https://www.npmjs.com/package/astrolinkers-sdk/access →
+      https://www.npmjs.com/package/@astrolinkers/sdk-ts/access →
       "Settings" → "Trusted publishing" → "Add trusted publisher".
    2. Pick **GitHub Actions** and enter the values in the table
       below.
    3. Delete the `NPM_TOKEN` secret from the GitHub repo.
 
-| Field             | Value                 |
-| ----------------- | --------------------- |
-| Package name      | `astrolinkers-sdk`    |
-| GitHub owner      | `fedorello`           |
-| Repository name   | `astrolinkers-sdk-ts` |
-| Workflow filename | `release.yml`         |
-| Environment name  | `npm`                 |
+| Field             | Value                  |
+| ----------------- | ---------------------- |
+| Package name      | `@astrolinkers/sdk-ts` |
+| GitHub owner      | `fedorello`            |
+| Repository name   | `astrolinkers-sdk-ts`  |
+| Workflow filename | `release.yml`          |
+| Environment name  | `npm`                  |
 
 From release 2 onwards the workflow uses OIDC transparently.
 
@@ -84,11 +84,11 @@ From release 2 onwards the workflow uses OIDC transparently.
 6. **Verify on npm**:
 
    ```bash
-   npm view astrolinkers-sdk version
+   npm view @astrolinkers/sdk-ts version
    ```
 
    The new version should appear within ~1 minute of the
-   workflow completing. `npm install astrolinkers-sdk@0.X.Y`
+   workflow completing. `npm install @astrolinkers/sdk-ts@0.X.Y`
    should work immediately afterwards. From release 2 onwards
    the npm package page shows a "Provenance" badge.
 
@@ -127,7 +127,7 @@ Dependency install + build still go through pnpm.
 - **Tag-version mismatch** → the workflow exits early before
   publishing. Push a new tag matching `package.json`.
 - **`E403 OIDC token exchange failed`** → the Trusted Publisher
-  record on https://www.npmjs.com/package/astrolinkers-sdk/access
+  record on https://www.npmjs.com/package/@astrolinkers/sdk-ts/access
   does not match the workflow. Confirm GitHub owner / repo /
   workflow filename / environment name are exact matches.
 - **`E401 Need auth`** on the very first publish → the
@@ -136,7 +136,7 @@ Dependency install + build still go through pnpm.
   with the same version bumped.)
 - **A version was published with a bug** → npm does not allow
   re-using a version number. Deprecate the bad version
-  (`npm deprecate astrolinkers-sdk@0.X.Y "use 0.X.(Y+1)"`) and
+  (`npm deprecate @astrolinkers/sdk-ts@0.X.Y "use 0.X.(Y+1)"`) and
   ship `0.X.(Y+1)`. Unpublish is only allowed within 72 hours
   and only if no other public package depends on the version.
 

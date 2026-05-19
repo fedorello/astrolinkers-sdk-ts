@@ -9,14 +9,14 @@ name: Release
 #    — there is no pre-registration like PyPI's pending publishers.
 # 2. Trusted Publishing (every release after that): once the
 #    Trusted Publisher record is configured on
-#    https://www.npmjs.com/package/astrolinkers-sdk/access, the
+#    https://www.npmjs.com/package/@astrolinkers/sdk-ts/access, the
 #    `NPM_TOKEN` secret is deleted from the repo and the npm CLI
 #    transparently switches to OIDC. The published tarball carries
 #    a SLSA build provenance attestation that links it back to
 #    this exact tag + commit + workflow.
 #
 # Trusted Publisher values (configured AFTER first publish):
-#   - Package name      : astrolinkers-sdk
+#   - Package name      : @astrolinkers/sdk-ts
 #   - GitHub owner      : fedorello
 #   - Repository name   : astrolinkers-sdk-ts
 #   - Workflow filename : release.yml
@@ -40,7 +40,7 @@ jobs:
     # want a human in the loop on every release.
     environment:
       name: npm
-      url: https://www.npmjs.com/package/astrolinkers-sdk
+      url: https://www.npmjs.com/package/@astrolinkers/sdk-ts
     permissions:
       # `id-token: write` is the OIDC token npm exchanges for upload
       # creds AND the same token that signs the provenance

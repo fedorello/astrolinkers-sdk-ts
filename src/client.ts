@@ -8,7 +8,7 @@
  * Usage:
  *
  * ```ts
- * import { Astrolinkers } from "astrolinkers-sdk";
+ * import { Astrolinkers } from "@astrolinkers/sdk-ts";
  *
  * const client = new Astrolinkers({ apiKey: "alk_live_…" });
  * const chart = await client.charts.create({
