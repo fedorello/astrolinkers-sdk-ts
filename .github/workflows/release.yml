@@ -89,11 +89,13 @@ jobs:
         run: pnpm run build
 
       - name: Publish to npm (Trusted Publishing + provenance)
+        # No `NODE_AUTH_TOKEN` — the npm CLI detects the GitHub
+        # Actions OIDC context (because of `id-token: write` above)
+        # and exchanges the OIDC token for a one-shot upload
+        # credential against the Trusted Publisher record.
         # `--provenance` attaches a SLSA attestation signed via the
-        # workflow's OIDC token; `--access public` is required for
-        # an unscoped package's first publish (and a harmless no-op
-        # on subsequent ones). `--no-git-checks` is needed because
-        # we publish from a detached HEAD at the tag.
+        # same OIDC token; `--access public` is required for an
+        # unscoped package's first publish (and a harmless no-op on
+        # subsequent ones). `--no-git-checks` is needed because we
+        # publish from a detached HEAD at the tag.
         run: pnpm publish --provenance --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
