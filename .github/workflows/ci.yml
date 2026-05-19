@@ -18,7 +18,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        node: ["20", "22", "24"]
+        # Node 22+ only — pnpm 11 imports `node:sqlite` which
+        # was added in Node 22. The published SDK itself still
+        # works on Node 18+ (see `engines.node` in package.json);
+        # only the build tooling is gated.
+        node: ["22", "24"]
 
     steps:
       - uses: actions/checkout@v5
